@@ -8,6 +8,70 @@ use std::os::unix::io::{AsRawFd, RawFd};
 use std::path::PathBuf;
 
 
+pub enum Register {
+    GPFSEL = 0x00,
+    
+    GPSET =  0x1c,
+    GPCLR =  0x28,
+    GPLEV =  0x34,
+    GPEDS =  0x40,
+    GPREN =  0x4c,
+    GPFEN =  0x58,
+    GPHEN =  0x64,
+    GPLEN =  0x70,
+    GPAREN = 0x7c,
+    GPAFEN = 0x88,
+
+    GPPUPPDNCNTRL = 0xe4,
+}
+
+
+const REGISTER_SIZE: u32 = 4;
+const GPIO_PIN_COUNT: u32 = 58;
+const GPIO_FUNCS_PER_REGISTER: u32 = 10;
+const GPIO_PUPPUD_PER_REGISTER: u32 = 16;
+
+fn assert_pin_index(pin: u32) {
+    assert!(
+        pin < GPIO_PIN_COUNT,
+        "Illegal pin value. Pin must be in [0,{pin_count}) - Paniced on pin = {pin}",
+        pin_count = GPIO_PIN_COUNT, pin = pin
+    );
+}
+
+macro_rules! register_offset {
+    ($pin:expr) => {
+        if $pin > 31 { 4 } else { 0 }
+    };
+}
+
+impl Register {
+
+    pub fn to_offset(self, pin: u32) -> usize {
+        assert_pin_index(pin);
+
+        match self {
+            Register::GPFSEL => Register::gpfsel_offset_for(pin),
+            Register::GPPUPPDNCNTRL => Register::gp_pullup_pulldown(pin),
+            _ => Register::gp2reg_offset_for(self as u32, pin),
+        }
+    }
+
+    fn gpfsel_offset_for(pin: u32) -> usize {
+        ((pin / GPIO_FUNCS_PER_REGISTER) * REGISTER_SIZE) as usize
+    }
+
+    fn gp_pullup_pulldown(pin: u32) -> usize {
+        (Register::GPPUPPDNCNTRL as usize) + 
+            ((pin / GPIO_PUPPUD_PER_REGISTER) * REGISTER_SIZE) as usize
+    }
+
+    fn gp2reg_offset_for(offset: u32, pin: u32) -> usize {
+        (offset + register_offset!(pin)) as usize
+    }
+
+}
+
 fn detect_peripheral_base() -> Result<i64, Error> {
     // Stub that works for the Pi4
     let start: i64 = 0xfe200000;
@@ -97,5 +161,48 @@ impl Drop for GPIO {
 
 #[cfg(test)]
 mod tests {
-    //use super::*;
+    use super::*;
+
+    #[test]
+    fn test_register_gpfsel_to_offset() {
+        let gpfsel0 = Register::GPFSEL;
+        let gpfsel1 = Register::GPFSEL;
+        let gpfsel2 = Register::GPFSEL;
+        let gpfsel3 = Register::GPFSEL;
+        let gpfsel4 = Register::GPFSEL;
+        let gpfsel5 = Register::GPFSEL;
+        
+        assert_eq!(gpfsel0.to_offset(5),  0x00);
+        assert_eq!(gpfsel1.to_offset(15), 0x04);
+        assert_eq!(gpfsel2.to_offset(25), 0x08);
+        assert_eq!(gpfsel3.to_offset(35), 0x0c);
+        assert_eq!(gpfsel4.to_offset(45), 0x10);
+        assert_eq!(gpfsel5.to_offset(55), 0x14);
+    }
+
+
+    #[test]
+    fn test_register_2regcntrl_to_offset() {
+        let gpset0 = Register::GPSET;
+        let gpset1 = Register::GPSET;
+
+        assert_eq!(gpset0.to_offset(5),  0x1c + 0x00);
+        assert_eq!(gpset1.to_offset(45), 0x1c + 0x04);
+    }
+
+
+    #[test]
+    fn test_pullup_pulldown_control_to_offset(){
+        let gp_pup_pud0 = Register::GPPUPPDNCNTRL;
+        let gp_pup_pud1 = Register::GPPUPPDNCNTRL;
+        let gp_pup_pud2 = Register::GPPUPPDNCNTRL;
+        let gp_pup_pud3 = Register::GPPUPPDNCNTRL;
+    
+        assert_eq!(gp_pup_pud0.to_offset(8),    0xe4 + 0x00);
+        assert_eq!(gp_pup_pud1.to_offset(8+16), 0xe4 + 0x04);
+        assert_eq!(gp_pup_pud2.to_offset(8+32), 0xe4 + 0x08);
+        assert_eq!(gp_pup_pud3.to_offset(8+48), 0xe4 + 0x0c);
+
+    }
+
 }
