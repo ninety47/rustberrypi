@@ -192,7 +192,7 @@ mod tests {
 
 
     #[test]
-    fn test_pullup_pulldown_control_to_offset(){
+    fn test_pullup_pulldown_control_to_offset() {
         let gp_pup_pud0 = Register::GPPUPPDNCNTRL;
         let gp_pup_pud1 = Register::GPPUPPDNCNTRL;
         let gp_pup_pud2 = Register::GPPUPPDNCNTRL;
