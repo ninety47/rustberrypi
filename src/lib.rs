@@ -72,6 +72,32 @@ impl Register {
 
 }
 
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum PinFunction {
+	Input = 0b000,
+	Output = 0b001,
+	Alt0 = 0b100,
+	Alt1 = 0b101,
+	Alt2 = 0b110,
+	Alt3 = 0b111,
+	Alt4 = 0b011,
+	Alt5 = 0b010,
+}
+
+impl PinFunction {
+
+	pub fn to_bits(&self, pin: u32) -> u32 {
+		let fval = *self as u32;
+		fval <<	((pin % 10) * 3)
+	}
+
+	pub fn clear_mask(pin: u32) -> u32 {
+		!(0b111 << ((pin % 10) * 3))
+	}
+}
+
+
 fn detect_peripheral_base() -> Result<i64, Error> {
     // Stub that works for the Pi4
     let start: i64 = 0xfe200000;
@@ -205,4 +231,26 @@ mod tests {
 
     }
 
+
+    #[test]
+    fn test_pinfunction_to_bits() {
+        let pin32: u32 = 32;
+        let pin5: u32 = 5;
+        let output = PinFunction::Output;
+
+        assert_eq!(output.to_bits(pin32),         0b001000000);
+        assert_eq!(output.to_bits(pin5), 0b001000000000000000);
+    }
+
+    #[test]
+    fn test_pinfunction_clear_mask() {
+        let pin32: u32 = 32;
+        let pin5: u32 = 5;
+
+        let mask32: u32 = !(0b111000000);
+        let mask5: u32 = !(0b111000000000000000); 
+        assert_eq!(PinFunction::clear_mask(pin32), mask32);
+        assert_eq!(PinFunction::clear_mask(pin5), mask5);
+
+    }
 }
