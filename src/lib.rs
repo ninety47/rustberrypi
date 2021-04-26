@@ -173,6 +173,43 @@ impl GPIO {
         Ok(Self{buffer: ptr})
     }
 
+    pub fn set_function(self, pin: u32, function: PinFunction) {
+        let offset: usize = Register::GPFSEL.to_offset(pin);
+        let clear_mask: u32 = PinFunction::clear_mask(pin);
+        let function_mask: u32 =  function.to_bits(pin);
+
+        let ptr = self.buffer.wrapping_add(offset) as *mut u32;
+        unsafe {
+            let value: u32 = ptr.read_volatile();
+            ptr.write_volatile(value & clear_mask | function_mask);
+        }
+    }
+
+    pub fn set(&self, pin: u32) {
+        let offset: usize = Register::GPSET.to_offset(pin);
+        let ptr = self.buffer.wrapping_add(offset) as *mut u32;
+        unsafe {
+            let value: u32 = ptr.read_volatile();
+            ptr.write_volatile(value | (1 << pin));
+        }
+    }
+
+    pub fn clear(&self, pin: u32) {
+        let offset: usize = Register::GPCLR.to_offset(pin);
+        let ptr = self.buffer.wrapping_add(offset) as *mut u32;
+        unsafe {
+            let value: u32 = ptr.read_volatile();
+            ptr.write_volatile(value | (1 << pin));
+        }
+    }
+
+
+    pub fn level(&self, pin: u32) -> bool {
+        let offset: usize = Register::GPLEV.to_offset(pin);
+        let ptr = self.buffer.wrapping_add(offset) as *const u32;
+        let value: u32 = unsafe { ptr.read_volatile() };
+        ((value >> (pin % 32)) & 1) == 1
+    }    
 }
 
 
