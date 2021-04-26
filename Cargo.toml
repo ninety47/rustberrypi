@@ -1,5 +1,5 @@
 [package]
-name = "rustberry-pi"
+name = "rustberrypi"
 description = "Raspberry Pi GPIO interface"
 version = "0.1.0"
 authors = ["Michael O'Keeffe <michael.okeeffe@ninety47.com>"]
