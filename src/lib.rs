@@ -41,7 +41,7 @@ fn assert_pin_index(pin: u32) {
 
 macro_rules! register_offset {
     ($pin:expr) => {
-        if $pin > 31 { 4 } else { 0 }
+        if $pin > 31 { REGISTER_SIZE } else { 0 }
     };
 }
 
