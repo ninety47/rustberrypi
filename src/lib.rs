@@ -83,6 +83,7 @@ pub enum PinFunction {
 	Alt3 = 0b111,
 	Alt4 = 0b011,
 	Alt5 = 0b010,
+    Error = 0b1000,
 }
 
 impl PinFunction {
@@ -95,6 +96,21 @@ impl PinFunction {
 	pub fn clear_mask(pin: u32) -> u32 {
 		!(0b111 << ((pin % 10) * 3))
 	}
+
+    pub fn from_bits(pin: u32, bits: u32) -> PinFunction {
+        let bits = bits & (0b111 << ((pin % 10) * 3));
+        match bits {
+            0b000 => PinFunction::Input,
+            0b001 => PinFunction::Output,
+            0b100 => PinFunction::Alt0,
+            0b101 => PinFunction::Alt1,
+            0b110 => PinFunction::Alt2,
+            0b111 => PinFunction::Alt3,
+            0b011 => PinFunction::Alt4,
+            0b010 => PinFunction::Alt5,
+            _ => PinFunction::Error
+        }
+    }
 }
 
 
