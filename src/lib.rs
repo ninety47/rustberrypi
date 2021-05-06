@@ -97,6 +97,10 @@ impl PinFunction {
 		!(0b111 << ((pin % 10) * 3))
 	}
 
+    pub fn mask(pin: u32) -> u32 {
+        0b111 << ((pin % 10)* 3)
+    }
+
     pub fn from_bits(pin: u32, bits: u32) -> PinFunction {
         let bits = bits & (0b111 << ((pin % 10) * 3));
         match bits {
