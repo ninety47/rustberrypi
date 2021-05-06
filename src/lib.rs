@@ -193,7 +193,7 @@ impl GPIO {
         Ok(Self{buffer: ptr})
     }
 
-    pub fn set_function(self, pin: u32, function: PinFunction) {
+    pub fn set_function(&self, pin: u32, function: PinFunction) {
         let offset: usize = Register::GPFSEL.to_offset(pin);
         let clear_mask: u32 = PinFunction::clear_mask(pin);
         let function_mask: u32 =  function.to_bits(pin);
