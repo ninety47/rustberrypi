@@ -205,6 +205,14 @@ impl GPIO {
         }
     }
 
+    pub fn get_function(&self, pin: u32) -> PinFunction {
+        let offset: usize = Register::GPFSEL.to_offset(pin);
+        let ptr = self.buffer.wrapping_add(offset) as *const u32;
+        let bits: u32 = unsafe { ptr.read_volatile() };
+        PinFunction::from_bits(pin, bits)
+    }
+
+
     pub fn set(&self, pin: u32) {
         let offset: usize = Register::GPSET.to_offset(pin);
         let ptr = self.buffer.wrapping_add(offset) as *mut u32;
